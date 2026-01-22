@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/payment-prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Invoice {
+  id           String        @id @default(uuid())
+  bookingId    String        // Ref to BOOKING
+  userId       String        // Ref to CORE
+  amount       Decimal       @db.Decimal(12, 2)
+  status       InvoiceStatus @default(UNPAID)
+  dueDate      DateTime
+  paidAt       DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  
+  transactions Transaction[]
+  refunds      Refund[]
+  
+  @@map("invoices")
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PAID
+  EXPIRED
+  REFUNDED
+}
+
+model Transaction {
+  id              String            @id @default(uuid())
+  invoiceId       String
+  invoice         Invoice           @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  gatewayId       String
+  gateway         PaymentGateway    @relation(fields: [gatewayId], references: [id])
+  externalRef     String?           // Gateway transaction ID
+  amount          Decimal           @db.Decimal(12, 2)
+  method          String            // va_bca, gopay, credit_card
+  status          TransactionStatus @default(PENDING)
+  rawResponse     Json?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  @@map("transactions")
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  EXPIRED
+}
+
+model PaymentGateway {
+  id           String        @id @default(uuid())
+  name         String        @unique  // xendit, midtrans
+  isActive     Boolean       @default(true)
+  config       Json?         // API keys (encrypted)
+  transactions Transaction[]
+  
+  @@map("payment_gateways")
+}
+
+// Saga Compensation
+model Refund {
+  id          String       @id @default(uuid())
+  invoiceId   String
+  invoice     Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount      Decimal      @db.Decimal(12, 2)
+  reason      String?
+  status      RefundStatus @default(PENDING)
+  processedAt DateTime?
+  createdAt   DateTime     @default(now())
+  
+  @@map("refunds")
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}

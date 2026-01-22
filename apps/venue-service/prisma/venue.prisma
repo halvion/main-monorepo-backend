@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/venue-prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Facility {
+  id          String    @id @default(uuid())
+  ownerId     String    // Reference to User in CORE service
+  name        String
+  description String?
+  address     String
+  latitude    Decimal?  @db.Decimal(10, 8)
+  longitude   Decimal?  @db.Decimal(11, 8)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  metadata    FacilityMetadata?
+  images      FacilityImage[]
+  maintenance MaintenanceSchedule[]
+  
+  @@map("facilities")
+}
+
+model FacilityMetadata {
+  id           String   @id @default(uuid())
+  facilityId   String   @unique
+  facility     Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  type         String   // futsal, badminton, basketball
+  surfaceType  String?  // grass, vinyl, concrete
+  isIndoor     Boolean  @default(false)
+  capacity     Int?
+  amenities    Json?    // ["parking", "toilet", "canteen"]
+  openTime     String   // "08:00"
+  closeTime    String   // "22:00"
+  pricePerHour Decimal  @db.Decimal(12, 2)
+  
+  @@map("facility_metadata")
+}
+
+model FacilityImage {
+  id         String   @id @default(uuid())
+  facilityId String
+  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  url        String
+  caption    String?
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  
+  @@map("facility_images")
+}
+
+model MaintenanceSchedule {
+  id         String   @id @default(uuid())
+  facilityId String
+  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  startDate  DateTime
+  endDate    DateTime
+  reason     String?
+  createdAt  DateTime @default(now())
+  
+  @@map("maintenance_schedules")
+}
