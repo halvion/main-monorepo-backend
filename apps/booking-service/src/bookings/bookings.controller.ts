@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
-import { PaginationDto, CurrentUser, JwtPayload } from '@app/common';
+import { PaginationDto, CurrentUser } from '@app/common';
+import type { JwtPayload } from '@app/common';
 import { LogAction } from '@app/logging';
 
 @Controller('bookings')
