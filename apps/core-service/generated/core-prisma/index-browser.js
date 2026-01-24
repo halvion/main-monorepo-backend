@@ -128,25 +128,30 @@ exports.Prisma.UserScalarFieldEnum = {
   provider: 'provider',
   providerId: 'providerId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  roleId: 'roleId'
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.RoleScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  description: 'description'
+  description: 'description',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.PermissionScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  description: 'description'
+  description: 'description',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.RolePermissionScalarFieldEnum = {
   roleId: 'roleId',
-  permissionId: 'permissionId'
+  permissionId: 'permissionId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.UserSessionScalarFieldEnum = {

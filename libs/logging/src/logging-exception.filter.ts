@@ -10,7 +10,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { PrismaClient } from '../generated/logging-prisma';
+import { PrismaClient, Prisma } from '../generated/logging-prisma';
 
 // Extended request interface to carry logging data
 export interface LoggingRequest extends Request {
@@ -37,27 +37,32 @@ export class LoggingExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<LoggingRequest>();
 
-    const status =
+    let status =
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const message =
+    let message: string | undefined =
       exception instanceof HttpException
         ? exception.message
         : 'Internal server error';
 
-    const stack =
-      exception instanceof Error ? exception.stack : String(exception);
+    let stack = exception instanceof Error ? exception.stack : String(exception);
+    stack = exception instanceof Prisma.PrismaClientKnownRequestError ? exception.stack : stack;
 
     const startTime = request.__loggingStartTime || Date.now();
     const responseTime = Date.now() - startTime;
+     if (exception instanceof Prisma.PrismaClientKnownRequestError) {
+        status = HttpStatus.BAD_REQUEST;
+        message = "Bad Request";
+    }
 
     // Log to console
     this.logger.error(
       `${request.method} ${request.url} ${status} - ${responseTime}ms - ${message}`,
       stack,
     );
+   
 
     // Save to database
     if (this.prisma) {

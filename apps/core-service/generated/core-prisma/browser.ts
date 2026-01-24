@@ -28,6 +28,11 @@ export type User = Prisma.UserModel
  */
 export type Role = Prisma.RoleModel
 /**
+ * Model UserRole
+ * 
+ */
+export type UserRole = Prisma.UserRoleModel
+/**
  * Model Permission
  * 
  */

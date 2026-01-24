@@ -1,47 +1,16 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ApiResponse } from '@app/common';
-import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async register(register: RegisterDto) {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: register.email },
-    });
-
-    if (existingUser) {
-      throw new ConflictException('Email already registered');
-    }
-
-    const user = await this.prisma.user.create({
-      data: {
-        email: register.email,
-        password: register.password, // TODO: Hash password
-        name: register.name,
-        role: {
-          connect: { name: 'USER' },
-        },
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: { select: { name: true } },
-        createdAt: true,
-      },
-    });
-
-    return ApiResponse.success(user, 'User registered successfully');
-  }
-
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
-      include: { role: true },
+      include: { roles: { select: { name: true } } },
     });
 
     if (!user || user.password !== dto.password) {
@@ -53,7 +22,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role.name,
+        role: user.roles,
       },
       accessToken: 'dummy_token', // TODO: Implement actual JWT
     }, 'Login successful');

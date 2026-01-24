@@ -4,6 +4,7 @@ import { UsersService } from './users.service';
 import type { JwtPayload } from '@app/common';
 import { PaginationDto, Roles, CurrentUser, RolesGuard } from '@app/common';
 import { CreateUserDto } from './dto/create-user.dto';
+import { RegisterDto } from '../auth/dto/register.dto';
 import { LogAction } from '@app/logging';
 
 @ApiTags('users')
@@ -11,6 +12,15 @@ import { LogAction } from '@app/logging';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Post('register')
+  @ApiOperation({ summary: 'Register a new user' })
+  @ApiResponse({ status: 201, description: 'User successfully registered' })
+  @ApiResponse({ status: 409, description: 'Email already exists' })
+  @LogAction('USER_REGISTER')
+  async register(@Body() dto: RegisterDto) {
+    return this.usersService.register(dto);
+  }
 
   @Post()
   @Roles('ADMIN')

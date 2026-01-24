@@ -23,8 +23,7 @@ model User {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  roleId   String
-  role     Role          @relation(fields: [roleId], references: [id])
+  roles    Role[]
   sessions UserSession[]
 
   @@map("users")
@@ -34,8 +33,11 @@ model Role {
   id          String           @id @default(uuid())
   name        String           @unique // USER, OWNER, ADMIN
   description String?
-  users       User[]
   permissions RolePermission[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  users User[]
 
   @@map("roles")
 }
@@ -45,6 +47,8 @@ model Permission {
   name        String           @unique // can_edit_price, can_refund, can_manage_venue
   description String?
   roles       RolePermission[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   @@map("permissions")
 }
@@ -54,6 +58,8 @@ model RolePermission {
   permissionId String
   role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   @@id([roleId, permissionId])
   @@map("role_permissions")

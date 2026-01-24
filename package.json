@@ -13,6 +13,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/core-service/main",
     "start:core": "nest start core-service --watch",
+    "start:core:debug": "nest start core-service --debug --watch",
     "start:venue": "nest start venue-service --watch",
     "start:booking": "nest start booking-service --watch",
     "start:payment": "nest start payment-service --watch",
