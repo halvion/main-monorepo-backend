@@ -8,7 +8,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Observable, tap, map } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { LOG_ACTION_KEY } from './log-action.decorator';
 import { PrismaClient } from '../generated/logging-prisma';
 import { type LoggingRequest } from './logging-exception.filter';
@@ -44,7 +44,7 @@ export class LoggingInterceptor implements NestInterceptor {
 
     // Only handle successful responses here - errors are handled by the exception filter
     return next.handle().pipe(
-      map(async (responseBody) => {
+      tap(async (responseBody) => {
         const responseTime = Date.now() - startTime;
         const statusCode = response.statusCode;
 
@@ -81,8 +81,6 @@ export class LoggingInterceptor implements NestInterceptor {
             this.logger.error('Failed to save request log to DB', dbError);
           }
         }
-
-        return responseBody;
       }),
     );
   }

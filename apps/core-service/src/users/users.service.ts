@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { HashingService } from '@app/common';
 import { PaginationDto, ApiResponse, createPaginationMeta } from '@app/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { RegisterDto } from '../auth/dto/register.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly hashingService: HashingService,
+  ) {}
 
   async register(dto: RegisterDto) {
     const existingUser = await this.prisma.user.findUnique({
@@ -17,20 +21,18 @@ export class UsersService {
       throw new ConflictException('Email already registered');
     }
 
-    try {
-      await this.prisma.user.create({
-        data: {
-          email: dto.email,
-          password: dto.password, // TODO: Hash password
-          name: dto.name,
-          roles: {
-            connect: { name: 'USER' },
-          },
+    const hashedPassword = await this.hashingService.hash(dto.password);
+
+    await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        password: hashedPassword,
+        name: dto.name,
+        roles: {
+          connect: { name: 'USER' },
         },
-      });
-    } catch (error) {
-      throw error;
-    }
+      },
+    });
 
     return ApiResponse.success(null, 'User registered successfully');
   }
@@ -44,10 +46,12 @@ export class UsersService {
       throw new ConflictException('Email already registered');
     }
 
+    const hashedPassword = await this.hashingService.hash(dto.password);
+
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
-        password: dto.password, // TODO: Hash password
+        password: hashedPassword,
         name: dto.name,
         roles: {
           connect: { name: dto.roleName || 'USER' },

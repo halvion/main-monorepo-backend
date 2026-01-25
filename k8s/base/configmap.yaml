@@ -1,0 +1,23 @@
+# Kubernetes ConfigMap for shared configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: halvion-config
+  namespace: halvion
+data:
+  # JWT
+  JWT_EXPIRES_IN: '15m'
+  JWT_REFRESH_EXPIRES_IN: '7d'
+
+  # Service URLs (internal K8s DNS)
+  CORE_SERVICE_URL: 'http://core-service:3001'
+  BOOKING_SERVICE_URL: 'http://booking-service:3002'
+  VENUE_SERVICE_URL: 'http://venue-service:3003'
+  PAYMENT_SERVICE_URL: 'http://payment-service:3004'
+
+  # Infrastructure URLs (internal K8s DNS)
+  RABBITMQ_URL: 'amqp://guest:guest@rabbitmq:5672'
+  REDIS_URL: 'redis://redis:6379'
+
+  # CORS
+  ALLOWED_ORIGINS: 'https://your-frontend-domain.com'

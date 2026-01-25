@@ -16,7 +16,8 @@
       "entryFile": "main",
       "sourceRoot": "apps/core-service/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/core-service/tsconfig.app.json"
+        "tsConfigPath": "apps/core-service/tsconfig.app.json",
+        "webpackConfigPath": "webpack.config.js"
       }
     },
     "venue-service": {
