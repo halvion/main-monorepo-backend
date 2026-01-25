@@ -13,6 +13,7 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/core-service/main",
     "start:core": "nest start core-service --watch",
+    "start:core:debug": "nest start core-service --debug --watch",
     "start:venue": "nest start venue-service --watch",
     "start:booking": "nest start booking-service --watch",
     "start:payment": "nest start payment-service --watch",
@@ -26,11 +27,13 @@
     "prisma:generate:venue": "prisma generate --config=apps/venue-service/prisma.config.ts",
     "prisma:generate:booking": "prisma generate --config=apps/booking-service/prisma.config.ts",
     "prisma:generate:payment": "prisma generate --config=apps/payment-service/prisma.config.ts",
-    "prisma:generate:all": "npm run prisma:generate:core && npm run prisma:generate:venue && npm run prisma:generate:booking && npm run prisma:generate:payment",
+    "prisma:generate:logging": "prisma generate --config=libs/logging/prisma.config.ts",
+    "prisma:generate:all": "npm run prisma:generate:core && npm run prisma:generate:venue && npm run prisma:generate:booking && npm run prisma:generate:payment && npm run prisma:generate:logging",
     "prisma:migrate:core": "prisma migrate dev --config=apps/core-service/prisma.config.ts",
     "prisma:migrate:venue": "prisma migrate dev --config=apps/venue-service/prisma.config.ts",
     "prisma:migrate:booking": "prisma migrate dev --config=apps/booking-service/prisma.config.ts",
-    "prisma:migrate:payment": "prisma migrate dev --config=apps/payment-service/prisma.config.ts"
+    "prisma:migrate:payment": "prisma migrate dev --config=apps/payment-service/prisma.config.ts",
+    "prisma:migrate:logging": "prisma migrate dev --config=libs/logging/prisma.config.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -38,14 +41,19 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/microservices": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/swagger": "^11.2.5",
+    "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
+    "@types/pg": "^8.16.0",
     "amqplib": "^0.10.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "ioredis": "^5.4.1",
+    "pg": "^8.17.2",
     "redlock": "^5.0.0-beta.2",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

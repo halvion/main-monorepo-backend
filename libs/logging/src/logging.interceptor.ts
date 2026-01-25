@@ -8,14 +8,10 @@ import {
   Optional,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, map } from 'rxjs';
 import { LOG_ACTION_KEY } from './log-action.decorator';
-
-export interface LoggingPrismaClient {
-  requestLog: {
-    create: (args: { data: any }) => Promise<any>;
-  };
-}
+import { PrismaClient } from '../generated/logging-prisma';
+import { type LoggingRequest } from './logging-exception.filter';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -25,70 +21,81 @@ export class LoggingInterceptor implements NestInterceptor {
     private readonly reflector: Reflector,
     @Optional()
     @Inject('LOGGING_PRISMA_CLIENT')
-    private readonly prisma?: LoggingPrismaClient,
+    private readonly prisma?: PrismaClient,
     @Optional()
     @Inject('SERVICE_NAME')
     private readonly serviceName?: string,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<LoggingRequest>();
     const response = context.switchToHttp().getResponse();
     const startTime = Date.now();
 
+    // Attach start time and action to request for the exception filter to use
     const action = this.reflector.get<string>(
       LOG_ACTION_KEY,
       context.getHandler(),
     );
+    request.__loggingStartTime = startTime;
+    request.__loggingAction = action;
 
+    this.logger.debug(`Intercepting ${request.method} ${request.url}`);
+
+    // Only handle successful responses here - errors are handled by the exception filter
     return next.handle().pipe(
-      tap(async () => {
+      map(async (responseBody) => {
         const responseTime = Date.now() - startTime;
         const statusCode = response.statusCode;
-
-        const logData = {
-          service: this.serviceName || 'unknown',
-          method: request.method,
-          path: request.url,
-          statusCode,
-          userId: request.user?.sub || null,
-          action: action || null,
-          requestBody: this.sanitizeBody(request.body),
-          responseTime,
-          userAgent: request.headers['user-agent'] || null,
-          ipAddress: request.ip || request.connection?.remoteAddress || null,
-        };
 
         // Log to console
         this.logger.log(
           `${request.method} ${request.url} ${statusCode} - ${responseTime}ms`,
         );
 
-        // Save to database if prisma client is available
+        // Save to database
         if (this.prisma) {
           try {
-            await this.prisma.requestLog.create({ data: logData });
-          } catch (error) {
-            this.logger.error('Failed to save request log', error);
+            await this.prisma.requestLogHeader.create({
+              data: {
+                service: this.serviceName || 'unknown',
+                method: request.method,
+                path: request.url,
+                statusCode,
+                userId: (request as any).user?.sub || (request as any).user?.id || null,
+                action: action || null,
+                responseTime,
+                userAgent: request.get('user-agent') || null,
+                ipAddress: request.ip || request.socket?.remoteAddress || null,
+                detail: {
+                  create: {
+                    requestBody: this.sanitizeBody(request.body),
+                    responseBody: this.sanitizeBody(responseBody),
+                    exceptionMessage: null,
+                    stackTrace: null,
+                  },
+                },
+              },
+            });
+          } catch (dbError) {
+            this.logger.error('Failed to save request log to DB', dbError);
           }
         }
+
+        return responseBody;
       }),
     );
   }
 
   private sanitizeBody(body: any): any {
-    if (!body) return null;
-    
-    // Remove sensitive fields
+    if (!body || typeof body !== 'object') return null;
     const sanitized = { ...body };
-    const sensitiveFields = ['password', 'token', 'refreshToken', 'secret'];
-    
+    const sensitiveFields = ['password', 'token', 'refreshToken', 'secret', 'accessToken'];
     for (const field of sensitiveFields) {
       if (field in sanitized) {
         sanitized[field] = '[REDACTED]';
       }
     }
-    
     return sanitized;
   }
 }

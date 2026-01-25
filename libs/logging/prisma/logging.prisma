@@ -1,0 +1,38 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "../generated/logging-prisma"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+model RequestLogHeader {
+    id           String   @id @default(uuid())
+    service      String
+    method       String
+    path         String
+    statusCode   Int?
+    userId       String?
+    action       String?
+    responseTime Int?
+    userAgent    String?
+    ipAddress    String?
+    createdAt    DateTime @default(now())
+
+    detail RequestLogDetail?
+
+    @@map("request_logs_h")
+}
+
+model RequestLogDetail {
+    id               String           @id @default(uuid())
+    headerId         String           @unique
+    header           RequestLogHeader @relation(fields: [headerId], references: [id], onDelete: Cascade)
+    requestBody      Json?
+    responseBody     Json?
+    exceptionMessage String?
+    stackTrace       String?          @db.Text
+
+    @@map("request_logs_d")
+}

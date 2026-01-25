@@ -1,54 +1,19 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { ApiResponse } from '@app/common';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async register(data: { email: string; password: string; name: string }) {
-    // TODO: Implement password hashing with bcrypt
-    // TODO: Implement JWT token generation
-    
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: data.email },
-    });
-
-    if (existingUser) {
-      throw new ConflictException('Email already registered');
-    }
-
-    const user = await this.prisma.user.create({
-      data: {
-        email: data.email,
-        password: data.password, // TODO: Hash password
-        name: data.name,
-        role: {
-          connect: { name: 'USER' },
-        },
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: { select: { name: true } },
-        createdAt: true,
-      },
-    });
-
-    return ApiResponse.success(user, 'User registered successfully');
-  }
-
-  async login(data: { email: string; password: string }) {
-    // TODO: Implement password verification with bcrypt
-    // TODO: Implement JWT token generation
-    
+  async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
-      where: { email: data.email },
-      include: { role: true },
+      where: { email: dto.email },
+      include: { roles: { select: { name: true } } },
     });
 
-    if (!user || user.password !== data.password) {
+    if (!user || user.password !== dto.password) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -57,12 +22,13 @@ export class AuthService {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role.name,
+        role: user.roles,
       },
+      accessToken: 'dummy_token', // TODO: Implement actual JWT
     }, 'Login successful');
   }
 
-  async refreshToken(refreshToken: string) {
+  async refreshToken(token: string) {
     throw new UnauthorizedException('Not implemented');
   }
 }

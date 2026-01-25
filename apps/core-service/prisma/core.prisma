@@ -14,38 +14,42 @@ datasource db {
 }
 
 model User {
-  id          String    @id @default(uuid())
-  email       String    @unique
-  name        String
-  password    String?
-  provider    String?   // OAuth: google, github
-  providerId  String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  roleId      String
-  role        Role      @relation(fields: [roleId], references: [id])
-  sessions    UserSession[]
-  
+  id         String   @id @default(uuid())
+  email      String   @unique
+  name       String
+  password   String?
+  provider   String? // OAuth: google, github
+  providerId String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  roles    Role[]
+  sessions UserSession[]
+
   @@map("users")
 }
 
 model Role {
-  id          String    @id @default(uuid())
-  name        String    @unique  // USER, OWNER, ADMIN
+  id          String           @id @default(uuid())
+  name        String           @unique // USER, OWNER, ADMIN
   description String?
-  users       User[]
   permissions RolePermission[]
-  
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  users User[]
+
   @@map("roles")
 }
 
 model Permission {
-  id          String    @id @default(uuid())
-  name        String    @unique  // can_edit_price, can_refund, can_manage_venue
+  id          String           @id @default(uuid())
+  name        String           @unique // can_edit_price, can_refund, can_manage_venue
   description String?
   roles       RolePermission[]
-  
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
   @@map("permissions")
 }
 
@@ -54,7 +58,9 @@ model RolePermission {
   permissionId String
   role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
   @@id([roleId, permissionId])
   @@map("role_permissions")
 }
@@ -68,6 +74,6 @@ model UserSession {
   ipAddress    String?
   expiresAt    DateTime
   createdAt    DateTime @default(now())
-  
+
   @@map("user_sessions")
 }

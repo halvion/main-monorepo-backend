@@ -1,6 +1,8 @@
 import { Module, DynamicModule, Global } from '@nestjs/common';
+import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { LoggingInterceptor } from './logging.interceptor';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { LoggingPrismaService } from './logging-prisma.service';
+import { LoggingExceptionFilter } from './logging-exception.filter';
 
 export interface LoggingModuleOptions {
   serviceName: string;
@@ -17,7 +19,9 @@ export class LoggingModule {
         provide: 'SERVICE_NAME',
         useValue: options.serviceName,
       },
+      LoggingPrismaService,
       LoggingInterceptor,
+      LoggingExceptionFilter,
     ];
 
     if (options.prismaClient) {
@@ -25,20 +29,29 @@ export class LoggingModule {
         provide: 'LOGGING_PRISMA_CLIENT',
         useValue: options.prismaClient,
       });
+    } else {
+      providers.push({
+        provide: 'LOGGING_PRISMA_CLIENT',
+        useExisting: LoggingPrismaService,
+      });
     }
 
-    // Register as global interceptor if enabled
+    // Register as global interceptor and filter if enabled
     if (options.enableGlobal !== false) {
       providers.push({
         provide: APP_INTERCEPTOR,
         useClass: LoggingInterceptor,
+      });
+      providers.push({
+        provide: APP_FILTER,
+        useClass: LoggingExceptionFilter,
       });
     }
 
     return {
       module: LoggingModule,
       providers,
-      exports: [LoggingInterceptor, 'SERVICE_NAME'],
+      exports: [LoggingInterceptor, LoggingExceptionFilter, LoggingPrismaService, 'SERVICE_NAME'],
     };
   }
 
@@ -59,6 +72,7 @@ export class LoggingModule {
         inject: options.inject || [],
       },
       LoggingInterceptor,
+      LoggingExceptionFilter,
     ];
 
     if (options.enableGlobal !== false) {
@@ -66,12 +80,16 @@ export class LoggingModule {
         provide: APP_INTERCEPTOR,
         useClass: LoggingInterceptor,
       });
+      providers.push({
+        provide: APP_FILTER,
+        useClass: LoggingExceptionFilter,
+      });
     }
 
     return {
       module: LoggingModule,
       providers,
-      exports: [LoggingInterceptor, 'SERVICE_NAME'],
+      exports: [LoggingInterceptor, LoggingExceptionFilter, 'SERVICE_NAME'],
     };
   }
 }
