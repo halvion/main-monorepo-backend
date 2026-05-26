@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { HashingService } from '@app/common';
 import { ApiResponse, type JwtPayload } from '@app/common';
 import { LoginDto } from './dto/login.dto';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -40,6 +41,18 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(payload);
 
+    const refreshToken = crypto.randomBytes(40).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // Valid for 7 days
+
+    await this.prisma.userSession.create({
+      data: {
+        userId: user.id,
+        refreshToken,
+        expiresAt,
+      },
+    });
+
     return ApiResponse.success(
       {
         user: {
@@ -49,24 +62,38 @@ export class AuthService {
           role: user.roles[0]?.name || 'USER',
         },
         accessToken,
+        refreshToken,
       },
       'Login successful',
     );
   }
 
   async refreshToken(token: string) {
-    try {
-      const payload = this.jwtService.verify(token);
-      const newPayload: JwtPayload = {
-        sub: payload.sub,
-        email: payload.email,
-        role: payload.role,
-      };
-      const accessToken = this.jwtService.sign(newPayload);
-      return ApiResponse.success({ accessToken }, 'Token refreshed');
-    } catch (error) {
-      throw new UnauthorizedException('Invalid refresh token');
+    const session = await this.prisma.userSession.findUnique({
+      where: { refreshToken: token },
+      include: { user: { include: { roles: true } } },
+    });
+
+    if (!session || session.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
+
+    const payload: JwtPayload = {
+      sub: session.user.id,
+      email: session.user.email,
+      role: session.user.roles[0]?.name || 'USER',
+    };
+    const accessToken = this.jwtService.sign(payload);
+
+    return ApiResponse.success({ accessToken }, 'Token refreshed');
+  }
+
+  async logout(refreshToken: string) {
+    await this.prisma.userSession.deleteMany({
+      where: { refreshToken },
+    });
+
+    return ApiResponse.success(null, 'Logged out successfully');
   }
 }
 
