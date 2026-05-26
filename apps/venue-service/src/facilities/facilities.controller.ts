@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { FacilitiesService } from './facilities.service';
-import { PaginationDto, Roles, CurrentUser, JwtPayload } from '@app/common';
+import { PaginationDto, Roles, CurrentUser } from '@app/common';
+import type { JwtPayload } from '@app/common';
+
 import { RolesGuard } from '@app/common';
 import { LogAction } from '@app/logging';
 

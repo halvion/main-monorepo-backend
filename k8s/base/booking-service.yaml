@@ -1,0 +1,61 @@
+# Booking Service Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-service
+  namespace: halvion
+  labels:
+    app: booking-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: booking-service
+  template:
+    metadata:
+      labels:
+        app: booking-service
+    spec:
+      containers:
+        - name: booking-service
+          image: your-registry/halvion-booking:latest
+          ports:
+            - containerPort: 3002
+          env:
+            - name: PORT
+              value: '3002'
+            - name: DATABASE_URL
+              value: 'postgresql://postgres:$(POSTGRES_PASSWORD)@postgres:5432/BOOKING?schema=public'
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: halvion-secrets
+                  key: JWT_SECRET
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: halvion-secrets
+                  key: POSTGRES_PASSWORD
+          envFrom:
+            - configMapRef:
+                name: halvion-config
+          resources:
+            requests:
+              memory: '256Mi'
+              cpu: '100m'
+            limits:
+              memory: '512Mi'
+              cpu: '500m'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: booking-service
+  namespace: halvion
+spec:
+  selector:
+    app: booking-service
+  ports:
+    - port: 3002
+      targetPort: 3002
+  type: ClusterIP

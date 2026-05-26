@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { BookingModule } from './booking.module';
-import { HttpExceptionFilter } from '@app/common';
+
 
 async function bootstrap() {
   const logger = new Logger('BookingService');
@@ -16,7 +16,7 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
-  app.useGlobalFilters(new HttpExceptionFilter());
+
   app.enableCors();
 
   const configService = app.get(ConfigService);

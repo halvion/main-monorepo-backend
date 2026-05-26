@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import type { JwtPayload } from '@app/common';
-import { PaginationDto, Roles, CurrentUser, RolesGuard } from '@app/common';
+import { PaginationDto, Roles, CurrentUser, RolesGuard, JwtAuthGuard } from '@app/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { RegisterDto } from '../auth/dto/register.dto';
 import { LogAction } from '@app/logging';
@@ -24,7 +24,7 @@ export class UsersController {
 
   @Post()
   @Roles('ADMIN')
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Create a new user (Admin only)' })
   @ApiResponse({ status: 201, description: 'User successfully created' })
   @ApiResponse({ status: 409, description: 'Email already exists' })
@@ -35,7 +35,7 @@ export class UsersController {
 
   @Get()
   @Roles('ADMIN')
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'List all users (Admin only)' })
   @ApiResponse({ status: 200, description: 'List of users returned' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
@@ -45,19 +45,17 @@ export class UsersController {
   }
 
   @Get('me')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiResponse({ status: 200, description: 'User profile returned' })
   @LogAction('GET_PROFILE')
   async getProfile(@CurrentUser() user: JwtPayload) {
-    if (!user) {
-      throw new UnauthorizedException('Please log in to view your profile');
-    }
     return this.usersService.findById(user.sub);
   }
 
   @Get(':id')
   @Roles('ADMIN')
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiOperation({ summary: 'Get user by ID (Admin only)' })
   @ApiResponse({ status: 200, description: 'User data returned' })
   @ApiResponse({ status: 404, description: 'User not found' })

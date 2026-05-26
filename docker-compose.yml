@@ -1,7 +1,14 @@
+# Docker Compose for Local Development
+# Usage: docker-compose up -d
+
 services:
+  # ============================================
+  # Infrastructure Services
+  # ============================================
+  
   postgres:
     image: postgres:16-alpine
-    container_name: thesis_postgres
+    container_name: halvion-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -20,7 +27,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: thesis_redis
+    container_name: halvion-redis
     restart: unless-stopped
     command: redis-server --appendonly yes
     volumes:
@@ -35,7 +42,7 @@ services:
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: thesis_rabbitmq
+    container_name: halvion-rabbitmq
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: guest
@@ -43,13 +50,98 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     ports:
-      - '5672:5672' # AMQP
+      - '5672:5672'   # AMQP
       - '15672:15672' # Management UI
     healthcheck:
       test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
       interval: 30s
       timeout: 10s
       retries: 5
+
+  # ============================================
+  # Application Services (uncomment to run in Docker)
+  # For development, run services locally with npm run start:dev
+  # ============================================
+
+  # core-service:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/core-service/Dockerfile
+  #   container_name: halvion-core
+  #   restart: unless-stopped
+  #   env_file:
+  #     - apps/core-service/.env
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:admin@postgres:5432/CORE?schema=public
+  #     - LOGGING_DATABASE_URL=postgresql://postgres:admin@postgres:5432/LOGGING?schema=public
+  #     - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+  #     - REDIS_URL=redis://redis:6379
+  #   ports:
+  #     - "3001:3001"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+
+  # booking-service:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/booking-service/Dockerfile
+  #   container_name: halvion-booking
+  #   restart: unless-stopped
+  #   env_file:
+  #     - apps/booking-service/.env
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:admin@postgres:5432/BOOKING?schema=public
+  #     - LOGGING_DATABASE_URL=postgresql://postgres:admin@postgres:5432/LOGGING?schema=public
+  #     - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+  #     - REDIS_URL=redis://redis:6379
+  #   ports:
+  #     - "3002:3002"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+
+  # venue-service:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/venue-service/Dockerfile
+  #   container_name: halvion-venue
+  #   restart: unless-stopped
+  #   env_file:
+  #     - apps/venue-service/.env
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:admin@postgres:5432/VENUE?schema=public
+  #     - LOGGING_DATABASE_URL=postgresql://postgres:admin@postgres:5432/LOGGING?schema=public
+  #     - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+  #     - REDIS_URL=redis://redis:6379
+  #   ports:
+  #     - "3003:3003"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+
+  # payment-service:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/payment-service/Dockerfile
+  #   container_name: halvion-payment
+  #   restart: unless-stopped
+  #   env_file:
+  #     - apps/payment-service/.env
+  #   environment:
+  #     - DATABASE_URL=postgresql://postgres:admin@postgres:5432/PAYMENT?schema=public
+  #     - LOGGING_DATABASE_URL=postgresql://postgres:admin@postgres:5432/LOGGING?schema=public
+  #     - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+  #     - REDIS_URL=redis://redis:6379
+  #   ports:
+  #     - "3004:3004"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
 
 volumes:
   postgres_data:

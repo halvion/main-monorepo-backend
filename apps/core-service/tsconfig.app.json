@@ -3,6 +3,6 @@
   "compilerOptions": {
     "outDir": "../../dist/apps/core-service"
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "generated/**/*"],
   "exclude": ["node_modules", "dist", "test"]
 }

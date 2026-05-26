@@ -1,0 +1,32 @@
+# Build artifacts
+dist/
+node_modules/
+
+# Environment files (contain secrets)
+.env
+apps/*/.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Docker
+docker-compose.override.yml
+
+# Kubernetes secrets (if stored locally)
+k8s/secrets/*.yaml
+!k8s/secrets/*.example.yaml

@@ -8,6 +8,13 @@ export * from './decorators/roles.decorator';
 
 // Guards
 export * from './guards/roles.guard';
+export * from './guards/jwt-auth.guard';
+
+// Strategies
+export * from './strategies/jwt.strategy';
+
+// Services
+export * from './services/hashing.service';
 
 // Filters
 export * from './filters/http-exception.filter';
