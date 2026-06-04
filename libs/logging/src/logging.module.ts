@@ -51,7 +51,12 @@ export class LoggingModule {
     return {
       module: LoggingModule,
       providers,
-      exports: [LoggingInterceptor, LoggingExceptionFilter, LoggingPrismaService, 'SERVICE_NAME'],
+      exports: [
+        LoggingInterceptor,
+        LoggingExceptionFilter,
+        LoggingPrismaService,
+        'SERVICE_NAME',
+      ],
     };
   }
 

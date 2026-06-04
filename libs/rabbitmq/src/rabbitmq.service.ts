@@ -32,11 +32,13 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     try {
       this.connection = await amqplib.connect(this.options.url);
       this.channel = await this.connection.createChannel();
-      
+
       const exchangeName = this.options.exchange || EXCHANGE_NAME;
-      await this.channel.assertExchange(exchangeName, 'topic', { durable: true });
+      await this.channel.assertExchange(exchangeName, 'topic', {
+        durable: true,
+      });
       await this.channel.assertQueue(this.options.queue, { durable: true });
-      
+
       this.logger.log(`Connected to RabbitMQ: ${this.options.queue}`);
     } catch (error) {
       this.logger.error('Failed to connect to RabbitMQ', error);

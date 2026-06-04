@@ -1,8 +1,27 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import type { JwtPayload } from '@app/common';
-import { PaginationDto, Roles, CurrentUser, RolesGuard, JwtAuthGuard } from '@app/common';
+import {
+  PaginationDto,
+  Roles,
+  CurrentUser,
+  RolesGuard,
+  JwtAuthGuard,
+} from '@app/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { RegisterDto } from '../auth/dto/register.dto';
 import { LogAction } from '@app/logging';

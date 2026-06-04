@@ -62,7 +62,10 @@ export class LoggingInterceptor implements NestInterceptor {
                 method: request.method,
                 path: request.url,
                 statusCode,
-                userId: (request as any).user?.sub || (request as any).user?.id || null,
+                userId:
+                  (request as any).user?.sub ||
+                  (request as any).user?.id ||
+                  null,
                 action: action || null,
                 responseTime,
                 userAgent: request.get('user-agent') || null,
@@ -88,7 +91,13 @@ export class LoggingInterceptor implements NestInterceptor {
   private sanitizeBody(body: any): any {
     if (!body || typeof body !== 'object') return null;
     const sanitized = { ...body };
-    const sensitiveFields = ['password', 'token', 'refreshToken', 'secret', 'accessToken'];
+    const sensitiveFields = [
+      'password',
+      'token',
+      'refreshToken',
+      'secret',
+      'accessToken',
+    ];
     for (const field of sensitiveFields) {
       if (field in sanitized) {
         sanitized[field] = '[REDACTED]';

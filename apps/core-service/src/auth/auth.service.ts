@@ -96,4 +96,3 @@ export class AuthService {
     return ApiResponse.success(null, 'Logged out successfully');
   }
 }
-

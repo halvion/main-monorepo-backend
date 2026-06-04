@@ -3,13 +3,16 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CoreModule } from './core.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { GlobalHttpExceptionFilter, GlobalAllExceptionsFilter } from '@app/common';
+import {
+  GlobalHttpExceptionFilter,
+  GlobalAllExceptionsFilter,
+} from '@app/common';
 
 async function bootstrap() {
   const logger = new Logger('CoreService');
   const app = await NestFactory.create(CoreModule);
 
- //#region Swagger
+  //#region Swagger
   const config = new DocumentBuilder()
     .setTitle('Core Service API')
     .setDescription('Core Service API description')
@@ -43,8 +46,10 @@ async function bootstrap() {
 
   // CORS configuration
   const configService = app.get(ConfigService);
-  const allowedOrigins = configService.get<string>('ALLOWED_ORIGINS')?.split(',') || ['http://localhost:3000'];
-  
+  const allowedOrigins = configService
+    .get<string>('ALLOWED_ORIGINS')
+    ?.split(',') || ['http://localhost:3000'];
+
   app.enableCors({
     origin: allowedOrigins,
     credentials: true,

@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "post_file_edit": [
+      {
+        "pattern": "apps/core-service/**/*.ts",
+        "run": "npx eslint apps/core-service/**/*.ts --fix && npx nest build core-service"
+      },
+      {
+        "pattern": "apps/booking-service/**/*.ts",
+        "run": "npx eslint apps/booking-service/**/*.ts --fix && npx nest build booking-service"
+      },
+      {
+        "pattern": "apps/venue-service/**/*.ts",
+        "run": "npx eslint apps/venue-service/**/*.ts --fix && npx nest build venue-service"
+      },
+      {
+        "pattern": "apps/payment-service/**/*.ts",
+        "run": "npx eslint apps/payment-service/**/*.ts --fix && npx nest build payment-service"
+      },
+      {
+        "pattern": "libs/**/*.ts",
+        "run": "npm run lint && npm run build"
+      }
+    ]
+  }
+}

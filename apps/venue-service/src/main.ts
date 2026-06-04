@@ -3,7 +3,6 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { VenueModule } from './venue.module';
 
-
 async function bootstrap() {
   const logger = new Logger('VenueService');
   const app = await NestFactory.create(VenueModule);

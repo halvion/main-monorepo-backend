@@ -47,14 +47,18 @@ export class LoggingExceptionFilter implements ExceptionFilter {
         ? exception.message
         : 'Internal server error';
 
-    let stack = exception instanceof Error ? exception.stack : String(exception);
-    stack = exception instanceof Prisma.PrismaClientKnownRequestError ? exception.stack : stack;
+    let stack =
+      exception instanceof Error ? exception.stack : String(exception);
+    stack =
+      exception instanceof Prisma.PrismaClientKnownRequestError
+        ? exception.stack
+        : stack;
 
     const startTime = request.__loggingStartTime || Date.now();
     const responseTime = Date.now() - startTime;
-     if (exception instanceof Prisma.PrismaClientKnownRequestError) {
-        status = HttpStatus.BAD_REQUEST;
-        message = "Bad Request";
+    if (exception instanceof Prisma.PrismaClientKnownRequestError) {
+      status = HttpStatus.BAD_REQUEST;
+      message = 'Bad Request';
     }
 
     // Log to console
@@ -62,7 +66,6 @@ export class LoggingExceptionFilter implements ExceptionFilter {
       `${request.method} ${request.url} ${status} - ${responseTime}ms - ${message}`,
       stack,
     );
-   
 
     // Save to database
     if (this.prisma) {
@@ -73,7 +76,8 @@ export class LoggingExceptionFilter implements ExceptionFilter {
             method: request.method,
             path: request.url,
             statusCode: status,
-            userId: (request as any).user?.sub || (request as any).user?.id || null,
+            userId:
+              (request as any).user?.sub || (request as any).user?.id || null,
             action: request.__loggingAction || null,
             responseTime,
             userAgent: request.get('user-agent') || null,

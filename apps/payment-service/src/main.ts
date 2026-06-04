@@ -3,7 +3,6 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PaymentModule } from './payment.module';
 
-
 async function bootstrap() {
   const logger = new Logger('PaymentService');
   const app = await NestFactory.create(PaymentModule);

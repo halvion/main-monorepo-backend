@@ -23,22 +23,23 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
     let message: string;
     if (typeof exceptionResponse === 'string') {
       message = exceptionResponse;
-    } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
+    } else if (
+      typeof exceptionResponse === 'object' &&
+      exceptionResponse !== null
+    ) {
       const responseObj = exceptionResponse as any;
       if (Array.isArray(responseObj.message)) {
         message = responseObj.message.join(', ');
       } else {
-        message = responseObj.message || responseObj.error || 'An error occurred';
+        message =
+          responseObj.message || responseObj.error || 'An error occurred';
       }
     } else {
       message = 'An error occurred';
     }
 
     // Log the error
-    this.logger.error(
-      `HTTP ${status} Error: ${message}`,
-      exception.stack,
-    );
+    this.logger.error(`HTTP ${status} Error: ${message}`, exception.stack);
 
     // Send standardized error response
     response.status(status).json(ApiResponse.error(message));
@@ -53,13 +54,13 @@ export class GlobalAllExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
-    const status = exception instanceof HttpException
-      ? exception.getStatus()
-      : HttpStatus.INTERNAL_SERVER_ERROR;
+    const status =
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const message = exception instanceof Error
-      ? exception.message
-      : 'Internal server error';
+    const message =
+      exception instanceof Error ? exception.message : 'Internal server error';
 
     // Log the error
     this.logger.error(

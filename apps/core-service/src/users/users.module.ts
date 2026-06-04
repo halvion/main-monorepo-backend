@@ -9,4 +9,3 @@ import { HashingService } from '@app/common';
   exports: [UsersService],
 })
 export class UsersModule {}
-

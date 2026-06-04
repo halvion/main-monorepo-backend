@@ -1,7 +1,14 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  Logger,
+} from '@nestjs/common';
 
 @Injectable()
-export abstract class PrismaBaseService<T extends { $connect: () => Promise<void>; $disconnect: () => Promise<void> }>
+export abstract class PrismaBaseService<
+  T extends { $connect: () => Promise<void>; $disconnect: () => Promise<void> },
+>
   implements OnModuleInit, OnModuleDestroy
 {
   protected abstract client: T;
@@ -22,4 +29,3 @@ export abstract class PrismaBaseService<T extends { $connect: () => Promise<void
     return this.client;
   }
 }
-

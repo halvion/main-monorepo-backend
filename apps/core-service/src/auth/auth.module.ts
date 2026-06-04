@@ -12,7 +12,9 @@ import { JwtStrategy, HashingService } from '@app/common';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'your-secret-key-change-in-production',
+        secret:
+          configService.get<string>('JWT_SECRET') ||
+          'your-secret-key-change-in-production',
         signOptions: {
           expiresIn: '1h' as const,
         },
@@ -25,4 +27,3 @@ import { JwtStrategy, HashingService } from '@app/common';
   exports: [AuthService, HashingService],
 })
 export class AuthModule {}
-

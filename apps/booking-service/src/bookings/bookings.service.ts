@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RabbitMQService, BOOKING_EVENTS } from '@app/rabbitmq';
 import { PaginationDto, ApiResponse, createPaginationMeta } from '@app/common';
@@ -55,13 +59,14 @@ export class BookingsService {
         totalAmount: data.totalAmount || 0,
         status: 'PENDING',
         items: {
-          create: data.items?.map((item: any) => ({
-            facilityId: item.facilityId,
-            slotDate: new Date(item.slotDate),
-            startTime: item.startTime,
-            endTime: item.endTime,
-            price: item.price || 0,
-          })) || [],
+          create:
+            data.items?.map((item: any) => ({
+              facilityId: item.facilityId,
+              slotDate: new Date(item.slotDate),
+              startTime: item.startTime,
+              endTime: item.endTime,
+              price: item.price || 0,
+            })) || [],
         },
         logs: {
           create: {

@@ -4,7 +4,11 @@ export class ApiResponse<T> {
   message?: string;
   meta?: PaginationMeta;
 
-  static success<T>(data: T, message?: string, meta?: PaginationMeta): ApiResponse<T> {
+  static success<T>(
+    data: T,
+    message?: string,
+    meta?: PaginationMeta,
+  ): ApiResponse<T> {
     const response = new ApiResponse<T>();
     response.success = true;
     response.data = data;

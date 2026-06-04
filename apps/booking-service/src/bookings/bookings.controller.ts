@@ -34,10 +34,7 @@ export class BookingsController {
 
   @Post(':id/cancel')
   @LogAction('CANCEL_BOOKING')
-  async cancel(
-    @CurrentUser() user: JwtPayload,
-    @Param('id') id: string,
-  ) {
+  async cancel(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.bookingsService.cancel(id, user.sub);
   }
 }
