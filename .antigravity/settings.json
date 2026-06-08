@@ -1,4 +1,25 @@
 {
+  "permissions": {
+    "allow": [
+      "npm run *",
+      "npm install *",
+      "npx nest *",
+      "npx eslint *",
+      "npx prisma *",
+      "npx tsc *",
+      "git status",
+      "git diff *",
+      "git log *",
+      "git add *",
+      "git commit *",
+      "git stash *",
+      "docker compose *",
+      "docker-compose *",
+      "docker ps",
+      "docker logs *"
+    ],
+    "deny": []
+  },
   "hooks": {
     "post_file_edit": [
       {

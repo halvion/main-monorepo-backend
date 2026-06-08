@@ -1,10 +1,12 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
-import { PaginationDto, CurrentUser } from '@app/common';
+import { PaginationDto, CurrentUser, JwtAuthGuard } from '@app/common';
 import type { JwtPayload } from '@app/common';
 import { LogAction } from '@app/logging';
+import { CreateBookingDto } from './dto/create-booking.dto';
 
 @Controller('bookings')
+@UseGuards(JwtAuthGuard)
 export class BookingsController {
   constructor(private readonly bookingsService: BookingsService) {}
 
@@ -23,13 +25,22 @@ export class BookingsController {
     return this.bookingsService.findById(id);
   }
 
-  @Post()
-  @LogAction('CREATE_BOOKING')
-  async create(
+  @Post('traditional')
+  @LogAction('CREATE_BOOKING_TRADITIONAL')
+  async createTraditional(
     @CurrentUser() user: JwtPayload,
-    @Body() data: any, // TODO: Create proper DTO
+    @Body() dto: CreateBookingDto,
   ) {
-    return this.bookingsService.create(user.sub, data);
+    return this.bookingsService.createTraditional(user.sub, dto);
+  }
+
+  @Post('redlock')
+  @LogAction('CREATE_BOOKING_REDLOCK')
+  async createRedlock(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: CreateBookingDto,
+  ) {
+    return this.bookingsService.createWithRedlock(user.sub, dto);
   }
 
   @Post(':id/cancel')

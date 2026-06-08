@@ -57,7 +57,7 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
-  const port = configService.get<number>('PORT', 3001);
+  const port = configService.get<number>('CORE_PORT', 3001);
 
   await app.listen(port);
   logger.log(`Core Service is running on port ${port}`);

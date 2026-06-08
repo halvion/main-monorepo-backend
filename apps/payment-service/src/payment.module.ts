@@ -6,12 +6,13 @@ import { PrismaService } from './prisma/prisma.service';
 import { InvoicesModule } from './invoices/invoices.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { RefundsModule } from './refunds/refunds.module';
+import { PaymentSagaService } from './saga/payment-saga.service';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: 'apps/payment-service/.env',
+      envFilePath: '.env',
     }),
     LoggingModule.forRoot({
       serviceName: 'payment-service',
@@ -28,7 +29,7 @@ import { RefundsModule } from './refunds/refunds.module';
     TransactionsModule,
     RefundsModule,
   ],
-  providers: [PrismaService],
+  providers: [PrismaService, PaymentSagaService],
   exports: [PrismaService],
 })
 export class PaymentModule {}

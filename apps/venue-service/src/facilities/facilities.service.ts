@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginationDto, ApiResponse, createPaginationMeta } from '@app/common';
+import { SlotsService } from '../slots/slots.service';
 
 @Injectable()
 export class FacilitiesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly slotsService: SlotsService,
+  ) {}
 
   async findAll(pagination: PaginationDto) {
     const [facilities, total] = await Promise.all([
@@ -61,6 +65,12 @@ export class FacilitiesService {
       },
       include: { metadata: true },
     });
+
+    if (facility.metadata) {
+      const openTime = facility.metadata.openTime || '08:00';
+      const closeTime = facility.metadata.closeTime || '22:00';
+      this.slotsService.seedSlotsForFacility(facility.id, openTime, closeTime, 30).catch(() => {});
+    }
 
     return ApiResponse.success(facility, 'Facility created successfully');
   }

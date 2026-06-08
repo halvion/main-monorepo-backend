@@ -28,6 +28,7 @@ model Facility {
   metadata    FacilityMetadata?
   images      FacilityImage[]
   maintenance MaintenanceSchedule[]
+  slots       OperatingSlot[]
   
   @@map("facilities")
 }
@@ -70,4 +71,18 @@ model MaintenanceSchedule {
   createdAt  DateTime @default(now())
   
   @@map("maintenance_schedules")
+}
+
+model OperatingSlot {
+  id          String   @id @default(uuid())
+  facilityId  String
+  facility    Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  slotDate    DateTime @db.Date
+  startTime   String   // "10:00"
+  endTime     String   // "11:00"
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  
+  @@unique([facilityId, slotDate, startTime])
+  @@map("operating_slots")
 }

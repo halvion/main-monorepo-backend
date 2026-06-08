@@ -15,6 +15,12 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private connection: amqplib.ChannelModel | null = null;
   private channel: amqplib.Channel | null = null;
 
+  private readonly subscriptions: Array<{
+    pattern: string;
+    handler: (data: any, msg: amqplib.ConsumeMessage) => Promise<void>;
+  }> = [];
+  private isConsuming = false;
+
   constructor(
     @Inject('RABBITMQ_OPTIONS')
     private readonly options: RabbitMQModuleOptions,
@@ -72,6 +78,17 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     this.logger.debug(`Published event: ${event}`);
   }
 
+  private matchPattern(pattern: string, routingKey: string): boolean {
+    const regexPattern =
+      '^' +
+      pattern
+        .replace(/\./g, '\\.')
+        .replace(/\*/g, '[^.]+')
+        .replace(/#/g, '.*') +
+      '$';
+    return new RegExp(regexPattern).test(routingKey);
+  }
+
   async subscribe(
     pattern: string,
     handler: (data: unknown, msg: amqplib.ConsumeMessage) => Promise<void>,
@@ -83,19 +100,37 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     const exchangeName = this.options.exchange || EXCHANGE_NAME;
     await this.channel.bindQueue(this.options.queue, exchangeName, pattern);
 
-    await this.channel.consume(this.options.queue, async (msg) => {
-      if (!msg) return;
+    this.subscriptions.push({ pattern, handler });
+    this.logger.log(`Registered local handler for pattern: ${pattern}`);
 
-      try {
-        const data = JSON.parse(msg.content.toString());
-        await handler(data, msg);
-        this.channel?.ack(msg);
-      } catch (error) {
-        this.logger.error(`Error processing message: ${pattern}`, error);
-        this.channel?.nack(msg, false, false);
-      }
-    });
+    if (!this.isConsuming) {
+      this.isConsuming = true;
+      await this.channel.consume(this.options.queue, async (msg) => {
+        if (!msg) return;
 
-    this.logger.log(`Subscribed to pattern: ${pattern}`);
+        try {
+          const routingKey = msg.fields.routingKey;
+          const data = JSON.parse(msg.content.toString());
+
+          const matched = this.subscriptions.filter((sub) =>
+            this.matchPattern(sub.pattern, routingKey),
+          );
+
+          if (matched.length > 0) {
+            for (const sub of matched) {
+              await sub.handler(data, msg);
+            }
+          } else {
+            this.logger.debug(`No local handler matched for routing key: ${routingKey}`);
+          }
+
+          this.channel?.ack(msg);
+        } catch (error) {
+          this.logger.error(`Error processing RabbitMQ message`, error);
+          this.channel?.nack(msg, false, false);
+        }
+      });
+      this.logger.log(`Started single consumer on queue: ${this.options.queue}`);
+    }
   }
 }

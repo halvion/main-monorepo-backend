@@ -5,12 +5,16 @@ import { RabbitMQModule, QUEUES } from '@app/rabbitmq';
 import { PrismaService } from './prisma/prisma.service';
 import { BookingsModule } from './bookings/bookings.module';
 import { SlotsModule } from './slots/slots.module';
+import { RedisModule } from './redis/redis.module';
+import { BookingSagaService } from './saga/booking-saga.service';
+import { PassportModule } from '@nestjs/passport';
+import { JwtStrategy } from '@app/common';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: 'apps/booking-service/.env',
+      envFilePath: '.env',
     }),
     LoggingModule.forRoot({
       serviceName: 'booking-service',
@@ -23,10 +27,12 @@ import { SlotsModule } from './slots/slots.module';
       }),
       inject: [ConfigService],
     }),
+    PassportModule,
+    RedisModule,
     BookingsModule,
     SlotsModule,
   ],
-  providers: [PrismaService],
+  providers: [PrismaService, BookingSagaService, JwtStrategy],
   exports: [PrismaService],
 })
 export class BookingModule {}
