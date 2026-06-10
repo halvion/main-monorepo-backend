@@ -67,39 +67,9 @@ export class PaymentSagaService implements OnModuleInit {
         });
       }
 
-      // Simulate payment processing (50/50 chance of success)
-      const isSuccess = Math.random() < 0.50;
-      this.logger.log(`Simulating payment for booking ${bookingId}: Success = ${isSuccess}`);
+      // We do NOT simulate payment here anymore, as we rely on Midtrans frontend trigger.
+      // The invoice is left UNPAID and the user will trigger payment.
 
-      const transaction = await this.prisma.transaction.create({
-        data: {
-          invoiceId: invoice.id,
-          gatewayId: gateway.id,
-          amount,
-          method: 'mock_wallet',
-          status: isSuccess ? 'SUCCESS' : 'FAILED',
-          externalRef: `MOCK-TX-${Math.random().toString(36).substring(7).toUpperCase()}`,
-        },
-      });
-
-      if (isSuccess) {
-        // Update Invoice status
-        await this.prisma.invoice.update({
-          where: { id: invoice.id },
-          data: {
-            status: 'PAID',
-            paidAt: new Date(),
-          },
-        });
-
-        // Publish PAYMENT_SUCCESS
-        await this.rabbitMQ.publish(BOOKING_EVENTS.PAYMENT_SUCCESS, { bookingId });
-        this.logger.log(`Payment success published for booking ${bookingId}`);
-      } else {
-        // Publish PAYMENT_FAILED
-        await this.rabbitMQ.publish(BOOKING_EVENTS.PAYMENT_FAILED, { bookingId });
-        this.logger.log(`Payment failure published for booking ${bookingId}`);
-      }
     } catch (error) {
       this.logger.error(`Failed to handle booking created event for ${bookingId}: ${error.message}`, error);
     }

@@ -7,6 +7,8 @@ import { InvoicesModule } from './invoices/invoices.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { RefundsModule } from './refunds/refunds.module';
 import { PaymentSagaService } from './saga/payment-saga.service';
+import { MidtransService } from './midtrans/midtrans.service';
+import { MidtransController } from './midtrans/midtrans.controller';
 
 @Module({
   imports: [
@@ -29,7 +31,8 @@ import { PaymentSagaService } from './saga/payment-saga.service';
     TransactionsModule,
     RefundsModule,
   ],
-  providers: [PrismaService, PaymentSagaService],
+  controllers: [MidtransController],
+  providers: [PrismaService, PaymentSagaService, MidtransService],
   exports: [PrismaService],
 })
 export class PaymentModule {}
