@@ -3,10 +3,6 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CoreModule } from './core.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import {
-  GlobalHttpExceptionFilter,
-  GlobalAllExceptionsFilter,
-} from '@app/common';
 
 async function bootstrap() {
   const logger = new Logger('CoreService');
@@ -38,11 +34,6 @@ async function bootstrap() {
     }),
   );
 
-  // Global exception filters
-  app.useGlobalFilters(
-    new GlobalAllExceptionsFilter(),
-    new GlobalHttpExceptionFilter(),
-  );
 
   // CORS configuration
   const configService = app.get(ConfigService);

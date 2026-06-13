@@ -150,6 +150,21 @@ export class BookingSagaService implements OnModuleInit {
 
   private async handlePaymentSuccess(bookingId: string) {
     try {
+      const booking = await this.prisma.booking.findUnique({
+        where: { id: bookingId }
+      });
+
+      if (!booking) {
+        this.logger.error(`Booking ${bookingId} not found during handlePaymentSuccess`);
+        return;
+      }
+
+      // Idempotency check: Skip if already processed
+      if (booking.status === 'PAID') {
+        this.logger.log(`Booking ${bookingId} is already PAID. Skipping.`);
+        return;
+      }
+
       await this.prisma.booking.update({
         where: { id: bookingId },
         data: {
@@ -176,6 +191,12 @@ export class BookingSagaService implements OnModuleInit {
       });
 
       if (!booking) return;
+
+      // Idempotency check: Skip if already cancelled
+      if (booking.status === 'CANCELLED') {
+        this.logger.log(`Booking ${bookingId} is already CANCELLED. Skipping.`);
+        return;
+      }
 
       await this.prisma.$transaction(async (tx) => {
         // Release local slot inventories

@@ -104,18 +104,20 @@ export class BookingsService {
         const slotDate = new Date(item.slotDate);
         slotDate.setHours(0, 0, 0, 0);
 
-        // Perform pessimistic lock
-        const slots = await tx.$queryRaw<any[]>`
-          SELECT * FROM slot_inventory
-          WHERE "facilityId" = ${item.facilityId}
-            AND "slotDate" = ${slotDate}::date
-            AND "startTime" = ${item.startTime}
-          FOR UPDATE
-        `;
+        const slot = await tx.slotInventory.findUnique({
+          where: {
+            facilityId_slotDate_startTime: {
+              facilityId: item.facilityId,
+              slotDate,
+              startTime: item.startTime,
+            },
+          },
+        });
 
-        const slot = slots[0];
         if (!slot || !slot.isAvailable) {
-          throw new ConflictException(`Slot for facility ${item.facilityId} at ${item.startTime} is already booked or unavailable.`);
+          throw new ConflictException(
+            `Slot for facility ${item.facilityId} at ${item.startTime} is already booked or unavailable.`,
+          );
         }
 
         // Update slot to locked state
@@ -191,7 +193,10 @@ export class BookingsService {
       })),
     });
 
-    return ApiResponse.success(booking, 'Booking initiated successfully using traditional lock.');
+    return ApiResponse.success(
+      booking,
+      'Booking initiated successfully using traditional lock.',
+    );
   }
 
   /**
@@ -211,7 +216,9 @@ export class BookingsService {
       // Acquire 10-second lock via Redis
       lock = await this.redlock.acquire(lockKeys, 10000);
     } catch (err) {
-      throw new ConflictException('Unable to secure slot locks. Please try again.');
+      throw new ConflictException(
+        'Unable to secure slot locks. Please try again.',
+      );
     }
 
     try {
@@ -234,17 +241,31 @@ export class BookingsService {
           });
 
           if (!slot || !slot.isAvailable) {
-            throw new ConflictException(`Slot for facility ${item.facilityId} at ${item.startTime} is already booked or unavailable.`);
+            throw new ConflictException(
+              `Slot for facility ${item.facilityId} at ${item.startTime} is already booked or unavailable.`,
+            );
           }
 
-          await tx.slotInventory.update({
-            where: { id: slot.id },
+          // Optimistic Concurrency Control (OCC) defense-in-depth:
+          // In case of Redis lock failure/expiration (e.g., V8 GC pause), this updateMany
+          // filter enforces that the slot must still be AVAILABLE at the moment of commit.
+          const updated = await tx.slotInventory.updateMany({
+            where: {
+              id: slot.id,
+              isAvailable: true,
+            },
             data: {
               isAvailable: false,
               lockedAt: new Date(),
               lockedBy: userId,
             },
           });
+
+          if (updated.count === 0) {
+            throw new ConflictException(
+              `Slot for facility ${item.facilityId} at ${item.startTime} is already booked or unavailable.`,
+            );
+          }
         }
 
         // Create booking
@@ -309,7 +330,10 @@ export class BookingsService {
         })),
       });
 
-      return ApiResponse.success(booking, 'Booking initiated successfully using Redlock.');
+      return ApiResponse.success(
+        booking,
+        'Booking initiated successfully using Redlock.',
+      );
     } finally {
       if (lock) {
         await lock.release().catch((err) => {

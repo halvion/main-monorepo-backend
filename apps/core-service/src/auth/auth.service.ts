@@ -21,7 +21,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentials test');
     }
 
     const isPasswordValid = await this.hashingService.compare(
@@ -30,7 +30,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentials test 2');
     }
 
     const payload: JwtPayload = {

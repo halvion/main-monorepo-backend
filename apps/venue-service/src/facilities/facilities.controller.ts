@@ -10,6 +10,7 @@ import {
 import { FacilitiesService } from './facilities.service';
 import { PaginationDto, Roles, CurrentUser } from '@app/common';
 import type { JwtPayload } from '@app/common';
+import { FindAllFacilitiesDto } from './dto/find-all-facilities.dto';
 
 import { RolesGuard } from '@app/common';
 import { LogAction } from '@app/logging';
@@ -20,8 +21,8 @@ export class FacilitiesController {
 
   @Get()
   @LogAction('LIST_FACILITIES')
-  async findAll(@Query() pagination: PaginationDto) {
-    return this.facilitiesService.findAll(pagination);
+  async findAll(@Query() query: FindAllFacilitiesDto) {
+    return this.facilitiesService.findAll(query);
   }
 
   @Get(':id')

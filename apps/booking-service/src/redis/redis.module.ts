@@ -19,10 +19,10 @@ import Redlock from 'redlock';
       useFactory: (redisClient: Redis) => {
         return new Redlock([redisClient], {
           driftFactor: 0.01,
-          // Retry logic configuration
-          retryCount: 10,
-          retryDelay: 200,
-          retryJitter: 200,
+          // Fail-fast logic: do not retry under high load to prevent connection buildup
+          retryCount: 0,
+          retryDelay: 0,
+          retryJitter: 0,
         });
       },
       inject: ['REDIS_CLIENT'],

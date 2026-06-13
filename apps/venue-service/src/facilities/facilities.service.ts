@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginationDto, ApiResponse, createPaginationMeta } from '@app/common';
 import { SlotsService } from '../slots/slots.service';
+import { FindAllFacilitiesDto } from './dto/find-all-facilities.dto';
 
 @Injectable()
 export class FacilitiesService {
@@ -10,25 +11,60 @@ export class FacilitiesService {
     private readonly slotsService: SlotsService,
   ) {}
 
-  async findAll(pagination: PaginationDto) {
+  async findAll(query: FindAllFacilitiesDto) {
+    const where: any = {
+      isActive: true,
+    };
+
+    if (query.type) {
+      where.metadata = {
+        type: query.type,
+      };
+    }
+
+    if (query.isIndoor !== undefined) {
+      if (!where.metadata) {
+        where.metadata = {};
+      }
+      where.metadata.isIndoor = query.isIndoor;
+    }
+
+    if (query.search) {
+      const searchLower = query.search.toLowerCase();
+      where.OR = [
+        { name: { contains: searchLower, mode: 'insensitive' } },
+        { description: { contains: searchLower, mode: 'insensitive' } },
+        { address: { contains: searchLower, mode: 'insensitive' } },
+      ];
+    }
+
+    const orderBy: any = {};
+    if (query.sortByPrice) {
+      orderBy.metadata = {
+        pricePerHour: query.sortByPrice,
+      };
+    } else {
+      orderBy.createdAt = 'desc';
+    }
+
     const [facilities, total] = await Promise.all([
       this.prisma.facility.findMany({
-        skip: pagination.skip,
-        take: pagination.take,
-        where: { isActive: true },
+        skip: query.skip,
+        take: query.take,
+        where,
         include: {
           metadata: true,
           images: { where: { isPrimary: true }, take: 1 },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy,
       }),
-      this.prisma.facility.count({ where: { isActive: true } }),
+      this.prisma.facility.count({ where }),
     ]);
 
     return ApiResponse.success(
       facilities,
       undefined,
-      createPaginationMeta(pagination.page ?? 1, pagination.limit ?? 10, total),
+      createPaginationMeta(query.page ?? 1, query.limit ?? 10, total),
     );
   }
 

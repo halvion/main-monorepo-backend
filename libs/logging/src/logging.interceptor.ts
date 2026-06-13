@@ -90,19 +90,44 @@ export class LoggingInterceptor implements NestInterceptor {
 
   private sanitizeBody(body: any): any {
     if (!body || typeof body !== 'object') return null;
-    const sanitized = { ...body };
-    const sensitiveFields = [
-      'password',
-      'token',
-      'refreshToken',
-      'secret',
-      'accessToken',
-    ];
-    for (const field of sensitiveFields) {
-      if (field in sanitized) {
-        sanitized[field] = '[REDACTED]';
-      }
+
+    // Avoid serializing Node/Express streams or request/response objects
+    if (
+      typeof body.writeHead === 'function' ||
+      typeof body.pipe === 'function' ||
+      body.constructor?.name === 'ServerResponse' ||
+      body.constructor?.name === 'IncomingMessage' ||
+      body.socket
+    ) {
+      return { _type: 'NonSerializableStream', constructor: body.constructor?.name || 'Response' };
     }
-    return sanitized;
+
+    try {
+      const sensitiveFields = [
+        'password',
+        'token',
+        'refreshToken',
+        'secret',
+        'accessToken',
+      ];
+      
+      const seen = new WeakSet();
+      const stringified = JSON.stringify(body, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+          if (seen.has(value)) {
+            return '[Circular]';
+          }
+          seen.add(value);
+        }
+        if (sensitiveFields.includes(key)) {
+          return '[REDACTED]';
+        }
+        return value;
+      });
+
+      return JSON.parse(stringified);
+    } catch (err) {
+      return { _error: 'Failed to serialize log body', message: err.message };
+    }
   }
 }

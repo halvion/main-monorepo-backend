@@ -42,10 +42,28 @@ export class LoggingExceptionFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    let message: string | undefined =
-      exception instanceof HttpException
-        ? exception.message
-        : 'Internal server error';
+    let message = 'Internal server error';
+    if (exception instanceof HttpException) {
+      const exceptionResponse = exception.getResponse();
+      if (typeof exceptionResponse === 'string') {
+        message = exceptionResponse;
+      } else if (
+        typeof exceptionResponse === 'object' &&
+        exceptionResponse !== null
+      ) {
+        const responseObj = exceptionResponse as any;
+        if (Array.isArray(responseObj.message)) {
+          message = responseObj.message.join(', ');
+        } else {
+          message =
+            responseObj.message || responseObj.error || 'An error occurred';
+        }
+      } else {
+        message = exception.message || 'An error occurred';
+      }
+    } else if (exception instanceof Error) {
+      message = exception.message;
+    }
 
     let stack =
       exception instanceof Error ? exception.stack : String(exception);
@@ -58,17 +76,19 @@ export class LoggingExceptionFilter implements ExceptionFilter {
     const responseTime = Date.now() - startTime;
     if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       status = HttpStatus.BAD_REQUEST;
-      message = 'Bad Request';
+      message = 'Bad Request Database Error';
     }
 
-    // Log to console
-    this.logger.error(
-      `${request.method} ${request.url} ${status} - ${responseTime}ms - ${message}`,
-      stack,
-    );
+    // Log to console - Only log server errors (5xx) to prevent terminal stdout bottlenecks under heavy load
+    if (status >= 500) {
+      this.logger.error(
+        `${request.method} ${request.url} ${status} - ${responseTime}ms - ${message}`,
+        stack,
+      );
+    }
 
-    // Save to database
-    if (this.prisma) {
+    // Save to database - Only log server errors (5xx) to prevent DB I/O bottlenecks under high-concurrency client errors (4xx)
+    if (this.prisma && status >= 500) {
       try {
         await this.prisma.requestLogHeader.create({
           data: {
@@ -98,20 +118,43 @@ export class LoggingExceptionFilter implements ExceptionFilter {
 
     // Send the response
     response.status(status).json({
-      statusCode: status,
+      success: false,
       message,
-      timestamp: new Date().toISOString(),
-      path: request.url,
     });
   }
 
   private sanitizeBody(body: any): any {
     if (!body || typeof body !== 'object') return null;
-    const sanitized = { ...body };
-    const sensitiveFields = ['password', 'token', 'refreshToken', 'secret'];
-    for (const field of sensitiveFields) {
-      if (field in sanitized) sanitized[field] = '[REDACTED]';
+
+    if (
+      typeof body.writeHead === 'function' ||
+      typeof body.pipe === 'function' ||
+      body.constructor?.name === 'ServerResponse' ||
+      body.constructor?.name === 'IncomingMessage' ||
+      body.socket
+    ) {
+      return { _type: 'NonSerializableStream', constructor: body.constructor?.name || 'RequestOrResponse' };
     }
-    return sanitized;
+
+    try {
+      const sensitiveFields = ['password', 'token', 'refreshToken', 'secret'];
+      const seen = new WeakSet();
+      const stringified = JSON.stringify(body, (key, value) => {
+        if (typeof value === 'object' && value !== null) {
+          if (seen.has(value)) {
+            return '[Circular]';
+          }
+          seen.add(value);
+        }
+        if (sensitiveFields.includes(key)) {
+          return '[REDACTED]';
+        }
+        return value;
+      });
+
+      return JSON.parse(stringified);
+    } catch (err) {
+      return { _error: 'Failed to serialize log body', message: err.message };
+    }
   }
 }

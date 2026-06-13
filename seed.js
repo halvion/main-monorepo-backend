@@ -4,7 +4,7 @@ const { crypto } = require('crypto');
 
 // Generate v4 UUID
 function uuidv4() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = Math.random() * 16 | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
@@ -33,7 +33,7 @@ async function main() {
         amenities: JSON.stringify(['parking', 'toilet', 'shower', 'canteen']),
         openTime: '08:00',
         closeTime: '22:00',
-        pricePerHour: 50.00,
+        pricePerHour: 50000.00,
       },
     },
     {
@@ -48,7 +48,7 @@ async function main() {
         amenities: JSON.stringify(['parking', 'toilet', 'changing_room']),
         openTime: '08:00',
         closeTime: '22:00',
-        pricePerHour: 15.00,
+        pricePerHour: 15000.00,
       },
     },
     {
@@ -63,7 +63,7 @@ async function main() {
         amenities: JSON.stringify(['toilet']),
         openTime: '10:00',
         closeTime: '22:00',
-        pricePerHour: 30.00,
+        pricePerHour: 30000.00,
       },
     },
   ];
