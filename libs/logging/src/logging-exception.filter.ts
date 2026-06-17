@@ -79,16 +79,14 @@ export class LoggingExceptionFilter implements ExceptionFilter {
       message = 'Bad Request Database Error';
     }
 
-    // Log to console - Only log server errors (5xx) to prevent terminal stdout bottlenecks under heavy load
-    if (status >= 500) {
-      this.logger.error(
-        `${request.method} ${request.url} ${status} - ${responseTime}ms - ${message}`,
-        stack,
-      );
-    }
+    // Log to console
+    this.logger.error(
+      `${request.method} ${request.url} ${status} - ${responseTime}ms - ${message}`,
+      stack,
+    );
 
-    // Save to database - Only log server errors (5xx) to prevent DB I/O bottlenecks under high-concurrency client errors (4xx)
-    if (this.prisma && status >= 500) {
+    // Save to database
+    if (this.prisma) {
       try {
         await this.prisma.requestLogHeader.create({
           data: {
