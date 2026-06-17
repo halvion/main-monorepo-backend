@@ -5,24 +5,31 @@ import { BookingModule } from './booking.module';
 
 async function bootstrap() {
   const logger = new Logger('BookingService');
-  const app = await NestFactory.create(BookingModule);
+  try {
+    const app = await NestFactory.create(BookingModule);
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: true },
-    }),
-  );
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+        transformOptions: { enableImplicitConversion: true },
+      }),
+    );
 
-  app.enableCors();
+    app.enableCors();
 
-  const configService = app.get(ConfigService);
-  const port = configService.get<number>('BOOKING_PORT', 3002);
+    const configService = app.get(ConfigService);
+    const port =
+      configService.get<number>('PORT') ||
+      configService.get<number>('BOOKING_PORT', 3002);
 
-  await app.listen(port);
-  logger.log(`Booking Service is running on port ${port}`);
+    await app.listen(port, '0.0.0.0');
+    logger.log(`Booking Service is running on port ${port}`);
+  } catch (error) {
+    logger.error('Failed to start Booking Service', (error as Error).stack);
+    process.exit(1);
+  }
 }
 
 bootstrap();

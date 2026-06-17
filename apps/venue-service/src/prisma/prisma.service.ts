@@ -17,14 +17,29 @@ export class PrismaService
   private readonly logger = new Logger(PrismaService.name);
 
   constructor(configService: ConfigService) {
-    const connectionString = configService.get<string>('DATABASE_VENUE_URL')!;
-    const pool = new Pool({ connectionString });
-    const schema =
-      new URL(connectionString).searchParams.get('schema') || undefined;
-    const adapter = schema
-      ? new PrismaPg(pool, { schema })
-      : new PrismaPg(pool);
-    super({ adapter });
+    const connectionString =
+      configService.get<string>('DATABASE_VENUE_URL') ||
+      configService.get<string>('DATABASE_URL');
+
+    if (!connectionString) {
+      const msg = 'DATABASE_VENUE_URL or DATABASE_URL environment variable is not defined.';
+      Logger.error(msg, '', 'PrismaService');
+      throw new Error(msg);
+    }
+
+    try {
+      const pool = new Pool({ connectionString });
+      const schema =
+        new URL(connectionString).searchParams.get('schema') || undefined;
+      const adapter = schema
+        ? new PrismaPg(pool, { schema })
+        : new PrismaPg(pool);
+      super({ adapter });
+    } catch (error) {
+      const msg = `Failed to initialize Venue PrismaPg adapter: ${(error as Error).message}`;
+      Logger.error(msg, (error as Error).stack, 'PrismaService');
+      throw error;
+    }
   }
 
   async onModuleInit(): Promise<void> {

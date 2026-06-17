@@ -18,14 +18,28 @@ export class LoggingPrismaService
 
   constructor(configService: ConfigService) {
     const connectionString =
-      configService.get<string>('LOGGING_DATABASE_URL')!;
-    const pool = new Pool({ connectionString });
-    const schema =
-      new URL(connectionString).searchParams.get('schema') || undefined;
-    const adapter = schema
-      ? new PrismaPg(pool, { schema })
-      : new PrismaPg(pool);
-    super({ adapter });
+      configService.get<string>('LOGGING_DATABASE_URL') ||
+      configService.get<string>('DATABASE_URL');
+
+    if (!connectionString) {
+      const msg = 'LOGGING_DATABASE_URL or DATABASE_URL environment variable is not defined.';
+      Logger.error(msg, '', 'LoggingPrismaService');
+      throw new Error(msg);
+    }
+
+    try {
+      const pool = new Pool({ connectionString });
+      const schema =
+        new URL(connectionString).searchParams.get('schema') || undefined;
+      const adapter = schema
+        ? new PrismaPg(pool, { schema })
+        : new PrismaPg(pool);
+      super({ adapter });
+    } catch (error) {
+      const msg = `Failed to initialize Logging PrismaPg adapter: ${(error as Error).message}`;
+      Logger.error(msg, (error as Error).stack, 'LoggingPrismaService');
+      throw error;
+    }
   }
 
   async onModuleInit(): Promise<void> {
