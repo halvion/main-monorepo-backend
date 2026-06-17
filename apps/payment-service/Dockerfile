@@ -6,12 +6,12 @@ RUN apk add --no-cache libc6-compat
 # Dependencies
 FROM base AS deps
 COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --only=production && npm cache clean --force
 
 # Builder
 FROM base AS builder
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 COPY . .
 RUN npm run prisma:generate:all
 RUN npm run build payment-service
