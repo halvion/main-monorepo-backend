@@ -13,6 +13,7 @@ FROM base AS builder
 COPY package*.json ./
 RUN npm ci
 COPY . .
+RUN npm run prisma:generate:all
 RUN npm run build booking-service
 
 # Runner
