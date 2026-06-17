@@ -17,10 +17,13 @@ export class PrismaService
   private readonly logger = new Logger(PrismaService.name);
 
   constructor(configService: ConfigService) {
-    const pool = new Pool({
-      connectionString: configService.get<string>('DATABASE_VENUE_URL'),
-    });
-    const adapter = new PrismaPg(pool);
+    const connectionString = configService.get<string>('DATABASE_VENUE_URL');
+    const pool = new Pool({ connectionString });
+    const schema =
+      new URL(connectionString).searchParams.get('schema') || undefined;
+    const adapter = schema
+      ? new PrismaPg(pool, { schema })
+      : new PrismaPg(pool);
     super({ adapter });
   }
 
