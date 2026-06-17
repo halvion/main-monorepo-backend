@@ -17,7 +17,7 @@ export class PrismaService
   private readonly logger = new Logger(PrismaService.name);
 
   constructor(configService: ConfigService) {
-    const connectionString = configService.get<string>('DATABASE_VENUE_URL');
+    const connectionString = configService.get<string>('DATABASE_VENUE_URL')!;
     const pool = new Pool({ connectionString });
     const schema =
       new URL(connectionString).searchParams.get('schema') || undefined;

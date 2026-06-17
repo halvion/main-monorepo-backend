@@ -18,7 +18,7 @@ export class PrismaService
 
   constructor(configService: ConfigService) {
     const connectionString =
-      configService.get<string>('DATABASE_PAYMENT_URL');
+      configService.get<string>('DATABASE_PAYMENT_URL')!;
     const pool = new Pool({ connectionString });
     const schema =
       new URL(connectionString).searchParams.get('schema') || undefined;
