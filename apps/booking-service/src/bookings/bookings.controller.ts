@@ -1,9 +1,19 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { BookingsService } from './bookings.service';
 import { PaginationDto, CurrentUser, JwtAuthGuard } from '@app/common';
 import type { JwtPayload } from '@app/common';
 import { LogAction } from '@app/logging';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { IdempotencyInterceptor } from '../idempotency/idempotency.interceptor';
 
 @Controller('bookings')
 @UseGuards(JwtAuthGuard)
@@ -26,6 +36,7 @@ export class BookingsController {
   }
 
   @Post('traditional')
+  @UseInterceptors(IdempotencyInterceptor)
   @LogAction('CREATE_BOOKING_TRADITIONAL')
   async createTraditional(
     @CurrentUser() user: JwtPayload,
@@ -35,6 +46,7 @@ export class BookingsController {
   }
 
   @Post('redlock')
+  @UseInterceptors(IdempotencyInterceptor)
   @LogAction('CREATE_BOOKING_REDLOCK')
   async createRedlock(
     @CurrentUser() user: JwtPayload,
@@ -44,6 +56,7 @@ export class BookingsController {
   }
 
   @Post(':id/cancel')
+  @UseInterceptors(IdempotencyInterceptor)
   @LogAction('CANCEL_BOOKING')
   async cancel(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
     return this.bookingsService.cancel(id, user.sub);
